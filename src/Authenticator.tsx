@@ -65,7 +65,7 @@ export class Authenticator<P, S> {
     constructor(
         public decode: (token: string) => P | undefined,
         public extract: (payload: P) => S,
-        public csrf: AntiCSRF,
+        public csrf?: AntiCSRF,
     ) {}
 
     // Creates a sticky AuthSession using an httpOnly cookie (this protects the auth token from XSS
@@ -130,6 +130,10 @@ export class Authenticator<P, S> {
 
     // Verify that the request object (or body) has a valid anti-CSRF token
     async verifyCSRF(req: IncomingMessage, body?: Record<string, any>): Promise<number> {
+        if (this.csrf === undefined) {
+            throw Error('AntiCSRF instance not provided');
+        }
+
         const csrfToken = await this.getCSRF(req, body);
         if (typeof csrfToken === 'number') {
             return csrfToken;
@@ -248,6 +252,9 @@ export class Authenticator<P, S> {
         if (opts?.withoutAnyCSRF) {
             return WithAuthSession as any;
         } else {
+            if (this.csrf === undefined) {
+                throw Error('AntiCSRF instance not provided');
+            }
             return this.csrf.hoc(WithAuthSession as any) as any;
         }
     }
