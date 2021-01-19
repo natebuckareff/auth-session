@@ -45,9 +45,6 @@ export interface HOCOpts<S> {
     //  }
     //  ```
     redirect?: (auth: AuthClient<S>, context: NextPageContext) => string | null;
-
-    // TODO
-    onGetInitialProps?: (auth: AuthClient<S>, context: NextPageContext) => void;
 }
 
 export type InitialProps<P, S> = P & { auth: AuthClient<S> };
@@ -217,10 +214,6 @@ export class Authenticator<P, S> {
                             res.writeHead(302, { Location });
                             res.end();
                         }
-                    }
-
-                    if (opts?.onGetInitialProps) {
-                        opts.onGetInitialProps(authClient, nextContext);
                     }
 
                     if (Component.getInitialProps) {

@@ -1,12 +1,13 @@
 {
     "name": "auth-session",
-    "version": "0.0.2",
+    "version": "0.0.3",
     "main": "lib/index.js",
     "types": "lib/index.d.ts",
     "license": "MIT",
     "scripts": {
         "build": "tsc",
         "lint": "eslint 'src/**/*.{ts,tsx}'",
+        "prepublish": "yarn build",
         "prepare": "install-peers"
     },
     "husky": {

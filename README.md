@@ -6,22 +6,22 @@ Simple cookie session management for [Next.js][1] applications.
 
 ## Usage
 
-### new Authenticator<P, S = P>(decode, extract, csrf)
+### new Authenticator<P, S = P>(decode, extract, [csrf])
 
-`decode` is a callback that parses the stringified cookie value.
+`decode` is a callback to deserialize and verify and the stringified cookie value.
 
-`extract` is a callback that pulls out values from the decoded cookie value that are passed to
-the client.
+`extract` is a callback that filters out sensitive non-client information from the decoded cookie
+value.
 
-`csrf` is an `AntiCSRF` instance for creating and verifying anti-CSRF tokens.
+`csrf` is an optional `AntiCSRF` instance for creating and verifying anti-CSRF tokens.
 
 Example:
 
 ```ts
 export const authenticator = new Authenticator<{ userId: string }>(
-    token => AuthToken.verify(token),
-    payload => ({ userId: payload.access.userId }),
-    new AntiCSRF(SECRET_KEY)
+    token => jwt.verify(token, AUTH_SECRET_KEY),
+    payload => ({ userId: payload.userId }),
+    new AntiCSRF(CSRF_SECRET_KEY)
 );
 ```
 
@@ -31,9 +31,9 @@ export const authenticator = new Authenticator<{ userId: string }>(
 
 `res` is a node response object.
 
-`payload` is the parsed version of `token`.
+`payload` is the deserialized `token`.
 
-`token` is the stringified data stored in the cookie.
+`token` is the stringified data to be stored in the cookie.
 
 Example:
 
@@ -42,7 +42,7 @@ export async function login(req, res) {
     const { username, password } = parseLoginRequest(req);
     const user = await db.user.getOne({ username });
     const payload = { userId: user.id }
-    const jwt.sign(payload, SECRET_KEY, {
+    const jwt.sign(payload, AUTH_SECRET_KEY, {
         expiresIn: '24h',
         mutatePayload: true
     });
@@ -141,21 +141,21 @@ Higher-order component that wraps a `NextPage` component with cookie authenticat
 
 `opts`:
 
-- `withoutAnyCSRF` wraps the page without any CSRF meta tag to context. This allows such pages to
-be cached,such as publicly visible landings pages
+- `withoutAnyCSRF` wraps the page without any CSRF meta tag or React context. Useful for static
+pages, such as publicly visible landings pages
 
-- `withoutQueryCSRF` wraps the page with a CSRF meta tag and AntiCSRF context, but doesn't
-attempt to verify that the URL contains a `_csrfToken` query paramter. You will generally want
-this option enabled, but be careful: if your page is server-side rendered you may be susceptible
-to timing and DoS attacks. However, disabling this option (the default) requires navigating to
-the affected page from somewhere that has added a `_csrfToken` query paramter to the URL (see the
-`useAntiCSRF` hook for generating these links) withoutQueryCSRF?: boolean;
+- `withoutQueryCSRF` inserts a CSRF meta tag and AntiCSRF React context, but doesn't attempt to
+verify that the page URL contains a `_csrfToken` query parameter. You will generally want this
+option enabled, but be careful: if your page is server-side rendered you may be susceptible to
+timing and DoS attacks. However, disabling this option (the default) requires navigating to the
+page from somewhere that will add a `_csrfToken` query parameter to the URL (see the
+`useAntiCSRF` hook for generating these URLs).
 
-- `fallback` on authentication failure render a fallback UI
+- `fallback` UI to render on on authentication failure.
 
-- `redirect` when the `getInitialProps` for the wrapped page runs it will call the provided
-callback. If the callback returns a string, then its used as a redirect URL, otherwise the page
-renders normally. Useful for redirecting when authentication fails
+- `redirect` is a callback that will be run by the HOC. Returning a string causes a redirect.
+Returning null does nothing. Useful for redirecting when authentication fails.
+
 
 ```ts
 const HomePage: NextPage = () => {

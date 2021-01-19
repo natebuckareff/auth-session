@@ -9,16 +9,24 @@ const AntiCSRFContext = React.createContext<string | null>(null);
 // tokens as a meta tag and provides it to react elements through a context
 
 export class AntiCSRF {
-    private csrfTokens: CSRFTokens = new CSRFTokens();
+    private csrfTokens?: CSRFTokens;
 
     constructor(private secretKey: string) {}
 
+    private getTokens() {
+        // Create CSRFTokens lazily
+        if (this.csrfTokens === undefined) {
+            this.csrfTokens = new CSRFTokens();
+        }
+        return this.csrfTokens;
+    }
+
     create(): string {
-        return this.csrfTokens.create(this.secretKey);
+        return this.getTokens().create(this.secretKey);
     }
 
     verify(token: string): boolean {
-        return this.csrfTokens.verify(this.secretKey, token);
+        return this.getTokens().verify(this.secretKey, token);
     }
 
     hoc<P>(Component: NextPage<P>): NextPage<P & { csrfToken: string }> {
