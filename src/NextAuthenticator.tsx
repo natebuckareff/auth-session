@@ -1,8 +1,12 @@
 import { IncomingMessage, ServerResponse } from 'http';
 import { NextPage, NextPageContext } from 'next';
-import React from 'react';
-import { AuthClient, Authenticator, AuthServer, AuthSessionContext } from './Authenticator';
+import React, { createContext, useContext } from 'react';
+import { AuthClient, Authenticator, AuthServer } from './Authenticator';
 import { NextAntiCSRF } from './NextAntiCSRF';
+
+export const AuthSessionContext = createContext<AuthClient<any>>({
+    loggedin: false,
+});
 
 export interface Options<S> {
     // Wraps the page without any CSRF meta tag to context. This allows such pages to be cached,
@@ -89,6 +93,12 @@ export class NextAuthenticator<P, S = P> extends Authenticator<P, S, NextAntiCSR
             }
             return this.csrf.hoc(WithAuthSession as any) as any;
         }
+    }
+
+    // React hook for reading the auth session
+    useAuthSession(): AuthClient<S> {
+        // eslint-disable-next-line react-hooks/rules-of-hooks
+        return useContext(AuthSessionContext);
     }
 }
 

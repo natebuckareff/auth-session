@@ -1,6 +1,5 @@
 import ServerCookies from 'cookies';
 import { IncomingMessage, ServerResponse } from 'http';
-import { createContext, useContext } from 'react';
 import { AntiCSRF } from './AntiCSRF';
 
 // Client auth state
@@ -10,10 +9,6 @@ export type AuthClient<S> = { loggedin: true; state: S } | { loggedin: false; er
 export type AuthServer<P, S> =
     | { loggedin: true; payload: P; state: S }
     | { loggedin: false; error?: any };
-
-export const AuthSessionContext = createContext<AuthClient<any>>({
-    loggedin: false,
-});
 
 export class Authenticator<P, S = P, CSRF extends AntiCSRF = AntiCSRF> {
     constructor(
@@ -139,11 +134,5 @@ export class Authenticator<P, S = P, CSRF extends AntiCSRF = AntiCSRF> {
             };
         }
         return this.fromCookieWithoutCSRF(req, res);
-    }
-
-    // React hook for reading the auth session
-    useAuthSession(): AuthClient<S> {
-        // eslint-disable-next-line react-hooks/rules-of-hooks
-        return useContext(AuthSessionContext);
     }
 }
