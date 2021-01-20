@@ -6,6 +6,18 @@ Simple cookie session management for [Next.js][1] applications.
 
 ## Usage
 
+This library exports four classes:
+
+- `Authenticator`
+- `AntiCSRF`
+
+and
+
+- `NextAuthenticator`
+- `NextAntiCSRF`
+
+> These classes import from the `next` package
+
 ### new Authenticator<P, S = P>(decode, extract, [csrf])
 
 `decode` is a callback to deserialize and verify and the stringified cookie value.
@@ -134,7 +146,7 @@ const MyComponent: FC = () => {
 }
 ```
 
-### Authenticator.hoc<Props>(Component, [opts])
+### NextAuthenticator.hoc<Props>(Component, [opts])
 
 Higher-order component that wraps a `NextPage` component with cookie authentication. Uses
 `getInitialProps`.

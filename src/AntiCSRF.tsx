@@ -1,9 +1,7 @@
 import CSRFTokens from 'csrf';
-import { NextPage, NextPageContext } from 'next';
-import Head from 'next/head';
 import React, { FC, useCallback, useContext } from 'react';
 
-const AntiCSRFContext = React.createContext<string | null>(null);
+export const AntiCSRFContext = React.createContext<string | null>(null);
 
 // Create and verify anti-CSRF tokens and wrap nextjs page components in a HOC that adds anti-CSRF
 // tokens as a meta tag and provides it to react elements through a context
@@ -27,41 +25,6 @@ export class AntiCSRF {
 
     verify(token: string): boolean {
         return this.getTokens().verify(this.secretKey, token);
-    }
-
-    hoc<P>(Component: NextPage<P>): NextPage<P & { csrfToken: string }> {
-        type Props = P & { csrfToken: string };
-
-        const csrfToken = this.create();
-
-        return class WithAntiCSRF extends React.Component<Props> {
-            static async getInitialProps(context: NextPageContext) {
-                if (Component.getInitialProps) {
-                    return {
-                        csrfToken,
-                        ...(await Component.getInitialProps(context)),
-                    };
-                } else {
-                    return { csrfToken };
-                }
-            }
-
-            render() {
-                const { csrfToken, ...props } = this.props;
-                return (
-                    <AntiCSRFContext.Provider value={csrfToken}>
-                        <Head>
-                            <meta
-                                key={`csrf-token-${csrfToken}`}
-                                name="csrf-token"
-                                content={csrfToken}
-                            />
-                        </Head>
-                        <Component {...(props as P)} />
-                    </AntiCSRFContext.Provider>
-                );
-            }
-        } as NextPage<Props>;
     }
 }
 
