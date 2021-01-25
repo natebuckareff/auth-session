@@ -135,4 +135,51 @@ export class Authenticator<P, S = P, CSRF extends AntiCSRF = AntiCSRF> {
         }
         return this.fromCookieWithoutCSRF(req, res);
     }
+
+    async fromBearer(req: IncomingMessage): Promise<AuthServer<P, S>> {
+        const bearer = req.headers.authorization;
+        if (bearer === undefined) {
+            return {
+                loggedin: false,
+                error: 'mising authorization header',
+            };
+        }
+
+        if (!bearer.startsWith('Bearer ')) {
+            return {
+                loggedin: false,
+                error: 'failed to parse bearer token',
+            };
+        }
+
+        const token = this.decode(bearer.slice(7));
+        if (token === undefined) {
+            return { loggedin: false, error: 'failed to verify auth token' };
+        }
+
+        return {
+            loggedin: true,
+            payload: token,
+            state: this.extract(token),
+        };
+    }
+
+    async fromBearerOrCookie(
+        req: IncomingMessage,
+        res: ServerResponse,
+        body?: Record<string, any>,
+    ): Promise<AuthServer<P, S>> {
+        return this.fromBearer(req).then(x => {
+            return x.loggedin ? x : this.fromCookie(req, res, body);
+        });
+    }
+
+    async fromBearerOrCookieWithoutCSRF(
+        req: IncomingMessage,
+        res: ServerResponse,
+    ): Promise<AuthServer<P, S>> {
+        return this.fromBearer(req).then(x => {
+            return x.loggedin ? x : this.fromCookieWithoutCSRF(req, res);
+        });
+    }
 }
